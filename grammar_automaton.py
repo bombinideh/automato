@@ -1,59 +1,108 @@
 import spacy
 
-# Carregar o modelo de linguagem em português
 nlp = spacy.load("pt_core_news_sm")
 
-# Função para classificar as palavras
+conjuncoes_oração = {'mas', 'porém', 'contudo', 'todavia'}
+conjuncoes_termos = {'e', 'ou'}
+
 def classificar_palavra(palavra):
+    if palavra.lower() == 'a' or palavra.lower() == 'o':
+        return 'DET'  # Corrige caso específico
     doc = nlp(palavra)
     for token in doc:
         return token.pos_
 
-# Função para criar o autômato de transições
 def criar_automato():
-    # Definindo os estados e as transições
     automato = {
-        'inicio': {'NOUN': 'sujeito', 'PRON': 'sujeito', 'DET': 'sujeito'},  # Agora aceita determinantes (como "um")
-        'sujeito': {'VERB': 'verbo'},  # Após sujeito, espera verbo
-        'verbo': {'NOUN': 'complemento', 'PRON': 'complemento', 'ADJ': 'complemento', 'ADV': 'complemento', 'DET': 'complemento', 'ADP': 'complemento'},  # Aceita complementos como adjetivos, advérbios, determinantes e preposições
-        'complemento': {'NOUN': 'complemento', 'PRON': 'complemento', 'ADJ': 'complemento', 'ADV': 'complemento', 'DET': 'complemento', 'ADP': 'complemento'}  # Complementos podem continuar
+        'inicio': {
+            'DET': 'sujeito',
+            'PRON': 'sujeito',
+            'NOUN': 'sujeito',
+        },
+        'sujeito': {
+            'DET': 'sujeito',
+            'NOUN': 'sujeito',
+            'PRON': 'sujeito',
+            'ADJ': 'sujeito',
+            'ADV': 'sujeito',
+            'VERB': 'verbo',
+            'AUX': 'verbo'
+        },
+        'verbo': {
+            'VERB': 'verbo',
+            'AUX': 'verbo',
+            'ADV': 'adv',
+            'ADP': 'adp',
+            'DET': 'complemento',
+            'NOUN': 'complemento',
+            'PRON': 'complemento',
+            'ADJ': 'complemento',
+            'CCONJ_TERMO': 'complemento',
+            'CCONJ_ORACAO': 'inicio'
+        },
+        'adv': {
+            'ADV': 'adv',
+            'ADP': 'adp',
+            'DET': 'complemento',
+            'NOUN': 'complemento',
+            'PRON': 'complemento',
+            'ADJ': 'complemento',
+            'CCONJ_TERMO': 'complemento',
+            'CCONJ_ORACAO': 'inicio'
+        },
+        'adp': {
+            'DET': 'complemento',
+            'NOUN': 'complemento',
+            'PRON': 'complemento',
+            'ADJ': 'complemento',
+            'CCONJ_TERMO': 'complemento',
+            'CCONJ_ORACAO': 'inicio'
+        },
+        'complemento': {
+            'NOUN': 'complemento',
+            'PRON': 'complemento',
+            'ADJ': 'complemento',
+            'DET': 'complemento',
+            'ADV': 'complemento',
+            'ADP': 'complemento',   # permite preposições aqui
+            'CCONJ_TERMO': 'complemento',
+            'CCONJ_ORACAO': 'inicio'
+        }
     }
-    # Estados de aceitação (último estado válido)
-    estados_aceitacao = ['complemento']
-    
+    estados_aceitacao = ['verbo', 'adv', 'complemento']
     return automato, estados_aceitacao
 
-# Função para verificar a sequência da frase com base no autômato
 def verificar_gramatica(frase):
-    # Tokenizar a frase
-    palavras = frase.split()
-    
-    # Criar o autômato e os estados de aceitação
+    doc = nlp(frase)
+    palavras = [token.text for token in doc if not token.is_punct]
+
     automato, estados_aceitacao = criar_automato()
-    
-    # Definindo o estado inicial do autômato
     estado_atual = 'inicio'
-    
-    # Percorrer as palavras e realizar as transições no autômato
+
     for palavra in palavras:
-        posicao = classificar_palavra(palavra)  # Classificar a palavra com o spacy
+        posicao = classificar_palavra(palavra)
+        
+        if posicao == 'CCONJ':
+            if palavra.lower() in conjuncoes_oração:
+                chave = 'CCONJ_ORACAO'
+            elif palavra.lower() in conjuncoes_termos:
+                chave = 'CCONJ_TERMO'
+            else:
+                print(f'Conjunção "{palavra}" não categorizada. Frase errada.')
+                return False
+            posicao = chave
+        
         print(f'Palavra: {palavra}, Classe: {posicao}, Estado atual: {estado_atual}')
-        # Verificar se a transição é válida
-        if posicao in automato[estado_atual]:
-            estado_atual = automato[estado_atual][posicao]  # Realizar a transição
+        
+        if posicao in automato.get(estado_atual, {}):
+            estado_atual = automato[estado_atual][posicao]
         else:
-            print(f'Frase errada! A palavra "{palavra}" não se encaixa em uma transição válida.')
+            print(f'Frase errada! A palavra "{palavra}" não se encaixa em uma transição válida no estado "{estado_atual}".')
             return False
 
-    # Verificar se o autômato terminou em um estado de aceitação
     if estado_atual in estados_aceitacao:
+        # print('Frase correta!')
         return True
     else:
-        print(f'Frase errada! A frase não terminou corretamente. Finalizou em estado: {estado_atual}')
+        print(f'Frase errada! Finalizou em estado: {estado_atual}')
         return False
-
-# Testes de exemplo
-# frase1 = "Eu comprei um livro grande"
-# frase2 = "Ela bonita canta bem"
-# frase3 = "Eles correram rápido pela rua"
-# frase4 = "Ela ama ler livros"

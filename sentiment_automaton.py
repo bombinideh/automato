@@ -11,18 +11,20 @@ class SentimentAutomaton:
         self.stemmer = PortugueseStemmer()
 
         # Palavras-base por categoria
-        det_words = ['o', 'a', 'este', 'essa', 'do', 'da', 'dos', 'das', 'um', 'uma', 'aqueles', 'aquelas']
-        pron_words = ['eu', 'nós', 'você', 'eles', 'elas', 'isso', 'aquilo']
-        subs_words = ['aula', 'curso', 'professor', 'conteúdo', 'plataforma', 'ensino', 'material', 'disciplina', 'mentoria', 'tarefa', 'atividade', 'comentário', 'feedback', 'exercício']
-        verbs_words = ['ser', 'estar', 'parecer', 'funcionar', 'é', 'ensinar', 'aprender', 'explicar', 'desenvolver', 'aplicar', 'praticar']
-        pos_verbs_words = ['adorar', 'aprender', 'compreender', 'entender', 'achar', 'gostar', 'apreciar', 'amar', 'curtir', 'valorizar', 'aprovado', 'recomendar', 'melhorar', 'fácil', 'motivador', 'encorajado']
-        adj_pos_words = ['excelente', 'bom', 'dinâmica', 'interessante', 'ótimo', 'boa', 'incrível', 'maravilhoso', 'eficiente', 'útil', 'esclarecedor', 'prático', 'completo', 'atrativo', 'engajador', 'conhecedor', 'relevante']
-        adj_neg_words = ['chato', 'confuso', 'ruim', 'péssimo', 'difícil', 'desorganizado', 'aburrido', 'sem foco', 'tedioso', 'insuportável', 'incompleto', 'desinteressante', 'pobre']
-        adj_neu_words = ['ok', 'normal', 'aceitável', 'adequado', 'suficiente', 'razoável', 'indiferente']
-        adv_words = ['muito', 'bastante', 'um pouco', 'extremamente', 'totalmente', 'levemente', 'quase', 'rapidamente', 'lentamente']
+        det_words = ['o', 'a', 'este', 'essa', 'do', 'da', 'dos', 'das', 'um', 'uma', 'aqueles', 'aquelas', 'meu', 'minha', 'teu', 'tua', 'seu', 'sua', 'nosso', 'nossa', 'este', 'essa', 'aquele', 'aquela']
+        pron_words = ['eu', 'nós', 'você', 'eles', 'elas', 'isso', 'aquilo', 'ele', 'ela', 'vocês', 'ninguém']
+        subs_words = ['aula', 'curso', 'professor', 'conteúdo', 'plataforma', 'ensino', 'material', 'disciplina', 'mentoria', 'tarefa', 'comentário', 'feedback', 'exercício', 'suporte', 'explicação', 'vídeo', 'fórum', 'quiz', 'projeto', 'prática', 'aprendizado', 'avaliação', 'dúvida', 'atividade', 'interação', 'desempenho']
+        verbs_words = ['ser', 'estar', 'parecer', 'funcionar', 'é', 'ensinar', 'aprender', 'explicar', 'desenvolver', 'aplicar', 'praticar', 'ajudar', 'contribuir', 'apresentar', 'discutir', 'comentar', 'responder', 'participar', 'interagir', 'avaliar', 'sugerir', 'recomendar', 'melhorar', 'organizar', 'planejar', 'realizar', 'executar']
+        pos_verbs_words = ['adorar', 'legal', 'aprender', 'compreender', 'entender', 'achar', 'gostar', 'apreciar', 'amar', 'curtir', 'valorizar', 'aprovado', 'recomendar', 'melhorar', 'fácil', 'motivador', 'encorajado']
+        adj_pos_words = ['excelente', 'bom', 'dinâmica', 'interessante', 'ótimo', 'boa', 'incrível', 'maravilhoso', 'eficiente', 'útil', 'esclarecedor', 'prático', 'completo', 'atrativo', 'engajador', 'conhecedor', 'relevante', 'divertido', 'agradável', 'positivo', 'construtivo', 'útil', 'satisfatório', 'proveitoso', 'valioso']
+        adj_neg_words = ['chato', 'confuso', 'ruim', 'péssimo', 'difícil', 'desorganizado', 'aburrido', 'sem foco', 'tedioso', 'insuportável', 'incompleto', 'desinteressante', 'pobre', 'horrível', 'desagradável', 'desmotivador', 'desencorajador', 'desconfortável', 'desapontador', 'negativo', 'destrutivo', 'inútil', 'insatisfatório', 'improdutivo', 'pouco claro']
+        adj_neu_words = ['ok', 'normal', 'aceitável', 'adequado', 'suficiente', 'razoável', 'indiferente', 'neutro', 'comum', 'regular', 'mediano', 'intermediário', 'passável', 'tolerável', 'equilibrado', 'imparcial', 'sem opinião']
+        adv_words = ['muito', 'bastante', 'um pouco', 'extremamente', 'totalmente', 'levemente', 'quase', 'rapidamente', 'lentamente', 'facilmente', 'dificilmente', 'geralmente', 'normalmente', 'habitualmente', 'eventualmente', 'ocasionalmente', 'raramente', 'frequentemente', 'constantemente', 'regularmente', 'esporadicamente', 'intermitentemente']
 
-
-        self.stop_words = {';', '?', ',', '.', '!', '?', ':', '-', '(', ')', '[', ']', '{', '}', "'", '"', '“', '”', '’'}
+        # Atenção: não removemos 'não' para poder capturar negações
+        self.stop_words = {';', '?', ',', '.', '!', ':', '-', '(', ')', '[', ']', '{', '}', "'", '"', '“', '”', '’',
+                           'mas', 'e', 'ou', 'porque', 'porém', 'contudo', 'todavia', 'entretanto', 'embora', 'ainda',
+                           'já', 'também', 'sim', 'simplesmente', 'apenas', 'só', 'mesmo', 'tão'}
 
         # Stemming das palavras
         self.det = set(self.stemmer.stem(w) for w in det_words)
@@ -48,7 +50,7 @@ class SentimentAutomaton:
         transitions['q0']['AdjNeg'] = 'q1'
         transitions['q0']['AdjNeu'] = 'q1'
         transitions['q0']['PosVerb'] = 'q1'
-        
+
         transitions['q1']['PosVerb'] = 'q1'
         transitions['q1']['AdjPos'] = 'q1'
         transitions['q1']['AdjNeg'] = 'q1'
@@ -63,14 +65,13 @@ class SentimentAutomaton:
             final_states={'q1'}
         )
 
-
     def tokenize_and_stem(self, sentence: str):
-        raw_tokens = re.findall(r"\w+|[^\s\w]", sentence.lower()) # Tokeniza a frase e deixa tudo em minúsculas
-        stems = [self.stemmer.stem(tok) if tok.isalpha() else tok for tok in raw_tokens] #deixa somente o radical
+        raw_tokens = re.findall(r"\w+|[^\s\w]", sentence.lower())  # Tokeniza a frase e deixa tudo em minúsculas
+        stems = [self.stemmer.stem(tok) if tok.isalpha() else tok for tok in raw_tokens]  # deixa somente o radical
         filtered = [
             (tok, stem)
             for tok, stem in zip(raw_tokens, stems)
-            if tok not in self.stop_words #Retira as stop words
+            if tok not in self.stop_words  # Retira as stop words (exceto 'não')
         ]
         if not filtered:
             return [], []
@@ -87,8 +88,6 @@ class SentimentAutomaton:
                 classes.append('Pron')
             elif stem in self.subs:
                 classes.append('Subs')
-            elif stem in self.adj_pos:
-                classes.append('AdjPos')  
             elif stem in self.verbs:
                 classes.append('Verb')
             elif stem in self.pos_verbs:
@@ -103,27 +102,65 @@ class SentimentAutomaton:
                 classes.append('Adv')
             else:
                 classes.append('OOV')
-        print(f"Classes: {classes}")
+        # print(f"Classes: {classes}")
         return classes
 
+    def verify_context(self, stems):
+        for i, stem in enumerate(stems):
+            if stem in self.subs:
+                return True
+        return False
+
     def analyze(self, sentence: str):
-        #verifica se a frase é gramaticalmente correta
+        # Verifica se a frase é gramaticalmente correta
         if verificar_gramatica(sentence):
             tokens, stems = self.tokenize_and_stem(sentence)
+
+            contexto = self.verify_context(stems)
+
+            if not contexto:
+                return {'valid': False,
+                        'error': 'Frase fora de contexto.',
+                        'path': []}
+
+
             classes = self.classify(stems)
             state = self.dfa.initial_state
 
             stack = []
-            path = [state]              
+            path = [state]
+            negacao_ativa = False  # flag para controle de negação
+
+            negacoes = {'não', 'nunca', 'jamais', 'nem'}
 
             for i, cls in enumerate(classes):
-                print(f"Token: {tokens[i]}, Classe: {cls}, Estado: {state}")
+                token = tokens[i]
+                # print(f"Token: {token}, Classe: {cls}, Estado: {state}")
+
+                if token in negacoes:
+                    negacao_ativa = True
+                    continue  # ativa negação e pula para próximo token
+
                 if cls == 'OOV':
                     return {'valid': False,
-                            'error': f"Token '{tokens[i]}' não reconhecido (OOV).",
-                            'path': path}   # opcional: devolve o trecho percorrido
+                            'error': f"Token '{token}' não reconhecido (OOV).",
+                            'path': path}
 
-                # pilha de sentimento
+                cls_original = cls
+
+                # Aplica negação somente em tokens com sentimento
+                if negacao_ativa:
+                    if cls in ('AdjPos', 'AdjNeg', 'PosVerb'):
+                        if cls == 'AdjPos' or cls == 'PosVerb':
+                            cls = 'AdjNeg'
+                        else:  # AdjNeg
+                            cls = 'AdjPos'
+                        negacao_ativa = False  # consome negação após inverter
+                    else:
+                        # Token neutro, mantém negação ativa para o próximo token
+                        pass
+
+                # Resto do seu código: pilha, transição DFA, etc.
                 if cls == 'AdjPos' or cls == 'PosVerb':
                     stack.append('Pos')
                 elif cls == 'AdjNeg':
@@ -132,16 +169,15 @@ class SentimentAutomaton:
                     else:
                         stack.append('Neg')
 
-                # transição do DFA
                 if cls not in self.dfa.transitions[state]:
                     expected = list(self.dfa.transitions[state].keys())
                     return {'valid': False,
-                            'error': (f"Posição {i}: token '{tokens[i]}' "
-                                    f"(classe {cls}) não esperado em {state}; "
+                            'error': (f"Posição {i}: token '{token}' "
+                                    f"(classe {cls_original}) não esperado em {state}; "
                                     f"esperava {expected}."),
                             'path': path}
                 state = self.dfa.transitions[state][cls]
-                path.append(state)          # ★ registra o novo estado
+                path.append(state)
 
             if state in self.dfa.final_states:
                 pos, neg = stack.count('Pos'), stack.count('Neg')
@@ -155,7 +191,6 @@ class SentimentAutomaton:
             return {'valid': False,
                     'error': 'Frase não é gramaticalmente correta.',
                     'path': []}
-
 
     def draw_matplotlib(self, path=None, fname=None, seed=42, show=True):
         """
@@ -184,19 +219,19 @@ class SentimentAutomaton:
         plt.figure(figsize=(9, 6))
         # nós
         nx.draw_networkx_nodes(G, pos,
-                            nodelist=[st for st in G.nodes if st not in self.dfa.final_states],
-                            node_size=1800, node_color='lightblue')
+                               nodelist=[st for st in G.nodes if st not in self.dfa.final_states],
+                               node_size=1800, node_color='lightblue')
         nx.draw_networkx_nodes(G, pos,
-                            nodelist=list(self.dfa.final_states),
-                            node_size=1800, node_color='lightgreen')
+                               nodelist=list(self.dfa.final_states),
+                               node_size=1800, node_color='lightgreen')
         # todas as arestas em cinza
         nx.draw_networkx_edges(G, pos, width=1.2, alpha=.4)
 
         # se houver caminho, destaque‐o
         if path and len(path) > 1:
-            highlight = [(path[i], path[i+1]) for i in range(len(path)-1)]
+            highlight = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
             nx.draw_networkx_edges(G, pos, edgelist=highlight,
-                                width=2.8, edge_color='red')
+                                   width=2.8, edge_color='red')
 
         # rótulos nos nós
         nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold')
@@ -214,11 +249,3 @@ class SentimentAutomaton:
         if show:
             plt.show()
         plt.close()
-
-# if __name__ == '__main__':
-#     sa = SentimentAutomaton()
-#     frase = 'Ela bonita canta bem'
-#     res = sa.analyze(frase)
-#     print(res)                      
-#     sa.draw_matplotlib(path=res['path'], fname='automato.png')
-
