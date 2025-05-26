@@ -1,51 +1,50 @@
-import re
-from nltk.stem.snowball import PortugueseStemmer
 from automata.fa.dfa import DFA
 import matplotlib.pyplot as plt
 import networkx as nx
 from grammar_automaton import verificar_gramatica
+import json
+from pathlib import Path
+from nltk.stem.snowball import SnowballStemmer
+import spacy
 
 class SentimentAutomaton:
-    def __init__(self):
-        # Stemmer para Português
-        self.stemmer = PortugueseStemmer()
+    def __init__(self, lexicon_path: str = None):
+        # Carrega modelo spaCy
+        self.nlp = spacy.load("pt_core_news_sm")
+        # Instancia SnowballStemmer para português
+        self.stemmer = SnowballStemmer("portuguese")
 
-        # Palavras-base por categoria
-        det_words = ['o', 'a', 'este', 'essa', 'do', 'da', 'dos', 'das', 'um', 'uma', 'aqueles', 'aquelas', 'meu', 'minha', 'teu', 'tua', 'seu', 'sua', 'nosso', 'nossa', 'este', 'essa', 'aquele', 'aquela']
-        pron_words = ['eu', 'nós', 'você', 'eles', 'elas', 'isso', 'aquilo', 'ele', 'ela', 'vocês', 'ninguém']
-        subs_words = ['aula', 'curso', 'professor', 'conteúdo', 'plataforma', 'ensino', 'material', 'disciplina', 'mentoria', 'tarefa', 'comentário', 'feedback', 'exercício', 'suporte', 'explicação', 'vídeo', 'fórum', 'quiz', 'projeto', 'prática', 'aprendizado', 'avaliação', 'dúvida', 'atividade', 'interação', 'desempenho']
-        verbs_words = ['ser', 'estar', 'parecer', 'funcionar', 'é', 'ensinar', 'aprender', 'explicar', 'desenvolver', 'aplicar', 'praticar', 'ajudar', 'contribuir', 'apresentar', 'discutir', 'comentar', 'responder', 'participar', 'interagir', 'avaliar', 'sugerir', 'recomendar', 'melhorar', 'organizar', 'planejar', 'realizar', 'executar']
-        pos_verbs_words = ['adorar', 'legal', 'aprender', 'compreender', 'entender', 'achar', 'gostar', 'apreciar', 'amar', 'curtir', 'valorizar', 'aprovado', 'recomendar', 'melhorar', 'fácil', 'motivador', 'encorajado']
-        adj_pos_words = ['excelente', 'bom', 'dinâmica', 'interessante', 'ótimo', 'boa', 'incrível', 'maravilhoso', 'eficiente', 'útil', 'esclarecedor', 'prático', 'completo', 'atrativo', 'engajador', 'conhecedor', 'relevante', 'divertido', 'agradável', 'positivo', 'construtivo', 'útil', 'satisfatório', 'proveitoso', 'valioso']
-        adj_neg_words = ['chato', 'confuso', 'ruim', 'péssimo', 'difícil', 'desorganizado', 'aburrido', 'sem foco', 'tedioso', 'insuportável', 'incompleto', 'desinteressante', 'pobre', 'horrível', 'desagradável', 'desmotivador', 'desencorajador', 'desconfortável', 'desapontador', 'negativo', 'destrutivo', 'inútil', 'insatisfatório', 'improdutivo', 'pouco claro']
-        adj_neu_words = ['ok', 'normal', 'aceitável', 'adequado', 'suficiente', 'razoável', 'indiferente', 'neutro', 'comum', 'regular', 'mediano', 'intermediário', 'passável', 'tolerável', 'equilibrado', 'imparcial', 'sem opinião']
-        adv_words = ['muito', 'bastante', 'um pouco', 'extremamente', 'totalmente', 'levemente', 'quase', 'rapidamente', 'lentamente', 'facilmente', 'dificilmente', 'geralmente', 'normalmente', 'habitualmente', 'eventualmente', 'ocasionalmente', 'raramente', 'frequentemente', 'constantemente', 'regularmente', 'esporadicamente', 'intermitentemente']
+        # Carrega o JSON de léxico
+        lex_path = Path(lexicon_path or __file__).parent / "sentiment_words.json"
+        with open(lex_path, encoding="utf-8") as f:
+            data = json.load(f)
 
-        # Atenção: não removemos 'não' para poder capturar negações
+        # palavras que não serão consideradas
         self.stop_words = {';', '?', ',', '.', '!', ':', '-', '(', ')', '[', ']', '{', '}', "'", '"', '“', '”', '’',
                            'mas', 'e', 'ou', 'porque', 'porém', 'contudo', 'todavia', 'entretanto', 'embora', 'ainda',
                            'já', 'também', 'sim', 'simplesmente', 'apenas', 'só', 'mesmo', 'tão'}
+        
+        stem = self.stemmer.stem
 
-        # Stemming das palavras
-        self.det = set(self.stemmer.stem(w) for w in det_words)
-        self.pron = set(self.stemmer.stem(w) for w in pron_words)
-        self.subs = set(self.stemmer.stem(w) for w in subs_words)
-        self.verbs = set(self.stemmer.stem(w) for w in verbs_words)
-        self.pos_verbs = set(self.stemmer.stem(w) for w in pos_verbs_words)
-        self.adj_pos = set(self.stemmer.stem(w) for w in adj_pos_words)
-        self.adj_neg = set(self.stemmer.stem(w) for w in adj_neg_words)
-        self.adj_neu = set(self.stemmer.stem(w) for w in adj_neu_words)
-        self.adv = set(self.stemmer.stem(w) for w in adv_words)
+        self.subs = { stem(w) for w in data.get("subs", []) }
+        self.det = { stem(w) for w in data.get("det", []) }
+        self.pron = { stem(w) for w in data.get("pron", []) }
+        self.verbs = { stem(w) for w in data.get("verbs", []) }
+        self.pos_verbs = { stem(w) for w in data.get("pos_verbs", []) }
+        self.adj_pos = { stem(w) for w in data.get("adj_pos", []) }
+        self.adj_neg = { stem(w) for w in data.get("adj_neg", []) }
+        self.adj_neu = { stem(w) for w in data.get("adj_neu", []) }
+        self.adv = { stem(w) for w in data.get("adv", []) }
+
 
         # Estados e símbolos
         states = {'q0', 'q1'}
         input_symbols = {'Det', 'Pron', 'Subs', 'Verb', 'PosVerb', 'AdjPos', 'AdjNeg', 'AdjNeu', 'Adv'}
         transitions = {
-            'q0': {sym: 'q0' for sym in input_symbols},  # por padrão, tudo vai pra q0
-            'q1': {sym: 'q1' for sym in input_symbols}   # por padrão, q1 volta pra q0
+            'q0': {sym: 'q0' for sym in input_symbols},  
+            'q1': {sym: 'q1' for sym in input_symbols}   
         }
 
-        # Transições específicas
         transitions['q0']['AdjPos'] = 'q1'
         transitions['q0']['AdjNeg'] = 'q1'
         transitions['q0']['AdjNeu'] = 'q1'
@@ -56,7 +55,6 @@ class SentimentAutomaton:
         transitions['q1']['AdjNeg'] = 'q1'
         transitions['q1']['AdjNeu'] = 'q1'
 
-        # Construção do DFA
         self.dfa = DFA(
             states=states,
             input_symbols=input_symbols,
@@ -66,18 +64,19 @@ class SentimentAutomaton:
         )
 
     def tokenize_and_stem(self, sentence: str):
-        raw_tokens = re.findall(r"\w+|[^\s\w]", sentence.lower())  # Tokeniza a frase e deixa tudo em minúsculas
-        stems = [self.stemmer.stem(tok) if tok.isalpha() else tok for tok in raw_tokens]  # deixa somente o radical
+        doc = self.nlp(sentence.lower())
+        # filtra pontuação e stop words
         filtered = [
-            (tok, stem)
-            for tok, stem in zip(raw_tokens, stems)
-            if tok not in self.stop_words  # Retira as stop words (exceto 'não')
+            (token.text, token.lemma_)
+            for token in doc
+            if not token.is_punct and token.text not in self.stop_words
         ]
         if not filtered:
             return [], []
 
-        raw_tokens, stems = zip(*filtered)
-        return list(raw_tokens), list(stems)
+        tokens, lemmas = zip(*filtered)
+        stems = [self.stemmer.stem(lemma) for lemma in lemmas]
+        return list(tokens), list(stems)
 
     def classify(self, stems):
         classes = []
@@ -102,7 +101,6 @@ class SentimentAutomaton:
                 classes.append('Adv')
             else:
                 classes.append('OOV')
-        # print(f"Classes: {classes}")
         return classes
 
     def verify_context(self, stems):
@@ -129,7 +127,7 @@ class SentimentAutomaton:
 
             stack = []
             path = [state]
-            negacao_ativa = False  # flag para controle de negação
+            negacao_ativa = False 
 
             negacoes = {'não', 'nunca', 'jamais', 'nem'}
 
@@ -139,7 +137,7 @@ class SentimentAutomaton:
 
                 if token in negacoes:
                     negacao_ativa = True
-                    continue  # ativa negação e pula para próximo token
+                    continue 
 
                 if cls == 'OOV':
                     return {'valid': False,
@@ -148,19 +146,16 @@ class SentimentAutomaton:
 
                 cls_original = cls
 
-                # Aplica negação somente em tokens com sentimento
                 if negacao_ativa:
                     if cls in ('AdjPos', 'AdjNeg', 'PosVerb'):
                         if cls == 'AdjPos' or cls == 'PosVerb':
                             cls = 'AdjNeg'
                         else:  # AdjNeg
                             cls = 'AdjPos'
-                        negacao_ativa = False  # consome negação após inverter
+                        negacao_ativa = False
                     else:
-                        # Token neutro, mantém negação ativa para o próximo token
                         pass
 
-                # Resto do seu código: pilha, transição DFA, etc.
                 if cls == 'AdjPos' or cls == 'PosVerb':
                     stack.append('Pos')
                 elif cls == 'AdjNeg':

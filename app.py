@@ -17,7 +17,7 @@ with st.sidebar:
     st.write(
         """
         Este app analisa o sentimento dos feedbacks fornecidos por alunos nas aulas online.
-        Ajuda professores e coordenadores a entenderem melhor a percepção dos estudantes, 
+        Ajuda professores e a própria plataforma a entenderem melhor a percepção dos estudantes, 
         identificando pontos fortes e áreas que precisam de melhorias.
         """
     )
@@ -40,7 +40,7 @@ frase = st.text_area(
     key="input_frase",
     height=120,
     max_chars=300,
-    placeholder="Ex: 'A aula foi ótima, mas poderia ter mais exemplos práticos.'",
+    placeholder="Ex: 'A aula foi ótima, mas o professor é ruim.'",
 )
 
 btn_style = """
@@ -92,12 +92,3 @@ if analisar:
         st.warning("⚠️ Por favor, insira um feedback para análise.")
 
 st.markdown("---")
-
-# st.markdown(
-#     """
-#     <p style="font-size: 12px; color: #888; text-align: center; margin-top: 20px;">
-#         Desenvolvido por alunos do professor Patrick Pedreira — Deborah Bombini, Gabriel Rabelo, Guilherme de Azevedo, João Gabriel Ortiz e Pedro Telli.
-#     </p>
-#     """,
-#     unsafe_allow_html=True,
-# )

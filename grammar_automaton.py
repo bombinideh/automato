@@ -2,16 +2,22 @@ import spacy
 
 nlp = spacy.load("pt_core_news_sm")
 
-conjuncoes_oração = {'mas', 'porém', 'contudo', 'todavia'}
+conjuncoes_oracao = {'mas', 'porém', 'contudo', 'todavia'}
 conjuncoes_termos = {'e', 'ou'}
 
 def classificar_palavra(palavra):
-    if palavra.lower() == 'a' or palavra.lower() == 'o':
-        return 'DET'  # Corrige caso específico
-    doc = nlp(palavra)
-    for token in doc:
-        return token.pos_
+    lower = palavra.lower()
+    if lower in ('a', 'o'):
+        return 'DET'
 
+    doc = nlp(palavra)
+    token = doc[0]
+
+    # particípio passado tratado como ADJ
+    if token.pos_ == 'VERB' and token.morph.get('VerbForm') == ['Part']:
+        return 'ADJ'
+
+    return token.pos_
 def criar_automato():
     automato = {
         'inicio': {
@@ -64,44 +70,48 @@ def criar_automato():
             'ADJ': 'complemento',
             'DET': 'complemento',
             'ADV': 'complemento',
-            'ADP': 'complemento',   # permite preposições aqui
+            'ADP': 'complemento',   
             'CCONJ_TERMO': 'complemento',
-            'CCONJ_ORACAO': 'inicio'
+            'CCONJ_ORACAO': 'inicio',
+            'VERB': 'verbo',
+            'AUX': 'verbo'
         }
     }
     estados_aceitacao = ['verbo', 'adv', 'complemento']
     return automato, estados_aceitacao
-
-def verificar_gramatica(frase):
+    
+def verificar_gramatica(frase: str) -> bool:
     doc = nlp(frase)
+    # filtra pontuação, mantém tokens
     palavras = [token.text for token in doc if not token.is_punct]
 
     automato, estados_aceitacao = criar_automato()
     estado_atual = 'inicio'
 
     for palavra in palavras:
-        posicao = classificar_palavra(palavra)
-        
-        if posicao == 'CCONJ':
-            if palavra.lower() in conjuncoes_oração:
-                chave = 'CCONJ_ORACAO'
-            elif palavra.lower() in conjuncoes_termos:
-                chave = 'CCONJ_TERMO'
+        pos = classificar_palavra(palavra)
+
+        # trata conjunções
+        if pos == 'CCONJ':
+            lower = palavra.lower()
+            if lower in conjuncoes_oracao:
+                pos = 'CCONJ_ORACAO'
+            elif lower in conjuncoes_termos:
+                pos = 'CCONJ_TERMO'
             else:
                 print(f'Conjunção "{palavra}" não categorizada. Frase errada.')
                 return False
-            posicao = chave
-        
-        print(f'Palavra: {palavra}, Classe: {posicao}, Estado atual: {estado_atual}')
-        
-        if posicao in automato.get(estado_atual, {}):
-            estado_atual = automato[estado_atual][posicao]
+
+        print(f'Palavra: {palavra}, Classe: {pos}, Estado atual: {estado_atual}')
+
+        trans = automato.get(estado_atual, {})
+        if pos in trans:
+            estado_atual = trans[pos]
         else:
             print(f'Frase errada! A palavra "{palavra}" não se encaixa em uma transição válida no estado "{estado_atual}".')
             return False
 
     if estado_atual in estados_aceitacao:
-        # print('Frase correta!')
         return True
     else:
         print(f'Frase errada! Finalizou em estado: {estado_atual}')
