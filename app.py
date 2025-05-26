@@ -22,8 +22,14 @@ with st.sidebar:
         """
     )
     st.markdown("---")
+    st.write("Repositório GitHub:")
+    st.markdown(
+        "[Acesse o repositório aqui](https://github.com/bombinideh/automato)"
+    )
+    st.markdown("---")
     st.write("Equipe:")
     st.write("Deborah Bombini, Gabriel Rabelo, Guilherme de Azevedo, João Gabriel Ortiz e Pedro Telli")
+    st.markdown("---")
 
 st.markdown(
     "<h1 style='text-align:center; color:#4B8BBE; margin-bottom: 0;'>Análise de Sentimento de Feedbacks</h1>",
@@ -44,23 +50,53 @@ frase = st.text_area(
 )
 
 btn_style = """
-    <style>
+<style>
     div.stButton > button {
-        background-color: #4B8BBE;
-        color: white;
+        position: relative;
+        font-size: 1.875rem;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 250ms;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    div.stButton > button {
+        background-color: #f0f0f0;
+        color: #242424;
+        border-radius: 0.5rem;
+        box-shadow: 
+            inset 0 1px 0 0 #f4f4f4,
+            0 1px 0 0 #efefef,
+            0 2px 0 0 #ececec,
+            0 4px 0 0 #e0e0e0,
+            0 5px 0 0 #dedede,
+            0 6px 0 0 #dcdcdc,
+            0 7px 0 0 #cacaca,
+            0 7px 8px 0 #cecece;
         font-weight: bold;
-        border-radius: 8px;
         padding: 12px 28px;
         font-size: 16px;
-        transition: background-color 0.3s ease;
         width: 180px;
         margin: auto;
         display: block;
     }
-    div.stButton > button:hover {
-        background-color: #306998;
+    .stButton > button:hover {
+        color: #242424;
+        transform: translateY(4px);
+        box-shadow: 
+            inset 0 1px 0 0 #f4f4f4,
+            0 1px 0 0 #efefef,
+            0 1px 0 0 #ececec,
+            0 2px 0 0 #e0e0e0,
+            0 2px 0 0 #dedede,
+            0 3px 0 0 #dcdcdc,
+            0 4px 0 0 #cacaca,
+            0 4px 6px 0 #cecece;
     }
-    </style>
+</style>
 """
 st.markdown(btn_style, unsafe_allow_html=True)
 

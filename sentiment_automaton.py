@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from nltk.stem.snowball import SnowballStemmer
 import spacy
+import re
 
 class SentimentAutomaton:
     def __init__(self, lexicon_path: str = None):
@@ -110,6 +111,8 @@ class SentimentAutomaton:
         return False
 
     def analyze(self, sentence: str):
+        #remove espaços extras e normaliza a frase
+        sentence = re.sub(r'\s+', ' ', sentence).strip()
         # Verifica se a frase é gramaticalmente correta
         if verificar_gramatica(sentence):
             tokens, stems = self.tokenize_and_stem(sentence)
